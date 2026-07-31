@@ -1,21 +1,21 @@
 ticker,fund_name,sleeve,broad_bm,style_bm,peer_bm,list_date,list_date_source,predecessor_ticker,expense_ratio,include
-DFUS,Dimensional US Equity Market ETF,US Core,R3000,R3000,ITOT,2021-06-14,dimensional.com,DTMEX,0.0009,TRUE
-DFAU,Dimensional US Core Equity Market ETF,US Core,R3000,R3000,ITOT,2020-11-17,press release,,0.0012,TRUE
-DFAC,Dimensional US Core Equity 2 ETF,US Core,R3000,R3000,ITOT,2021-06-14,dimensional.com,DFTCX,0.0017,TRUE
-DCOR,Dimensional US Core Equity 1 ETF,US Core,R3000,R3000,ITOT,auto,derive from data,,0.0014,TRUE
-DUHP,Dimensional US High Profitability ETF,US Quality,R3000,R1000,QUAL,auto,derive from data,,0.0020,TRUE
-DFUV,Dimensional US Marketwide Value ETF,US Value,R3000,R3000V,VTV,2022-05-09,dimensional.com,DFMVX,0.0021,TRUE
-DFLV,Dimensional US Large Cap Value ETF,US Value,R3000,R1000V,IWD,auto,derive from data,,0.0021,TRUE
-DFAS,Dimensional US Small Cap ETF,US Small,R3000,R2000,IJR,2021-06-14,dimensional.com,DFTSX,0.0026,TRUE
-DFAT,Dimensional US Targeted Value ETF,US Small Value,R3000,R2000V,IWN,2021-06-14,dimensional.com,DTMVX,0.0028,TRUE
-DFSV,Dimensional US Small Cap Value ETF,US Small Value,R3000,R2000V,AVUV,auto,derive from data,,0.0030,TRUE
-DFAI,Dimensional International Core Equity Market ETF,Dev ex-US,WXUSIMI,WXUSIMI,IDEV,2020-11-17,press release,,0.0018,TRUE
-DFIC,Dimensional International Core Equity 2 ETF,Dev ex-US,WXUSIMI,WXUSIMI,IDEV,auto,derive from data,,0.0022,TRUE
-DFIV,Dimensional International Value ETF,Dev ex-US Value,WXUS,WXUSV,EFV,2021-09-13,dimensional.com,DTMIX,0.0027,TRUE
-DFIS,Dimensional International Small Cap ETF,Dev ex-US Small,WXUS,WXUSSC,SCZ,auto,derive from data,,0.0039,TRUE
-DISV,Dimensional International Small Cap Value ETF,Dev ex-US Small Value,WXUS,WXUSSCV,DLS,auto,derive from data,,0.0042,TRUE
-DFAX,Dimensional World ex US Core Equity 2 ETF,World ex-US,ACWIXUSIMI,ACWIXUSIMI,VXUS,2021-09-13,dimensional.com,DFTWX,0.0028,TRUE
-DFAE,Dimensional Emerging Core Equity Market ETF,EM,EMIMI,EMIMI,IEMG,2020-12-01,press release,,0.0029,TRUE
-DFEM,Dimensional Emerging Markets Core Equity 2 ETF,EM,EMIMI,EMIMI,IEMG,auto,derive from data,,0.0039,TRUE
-DFEV,Dimensional Emerging Markets Value ETF,EM Value,EMIMI,EMV,FNDE,auto,derive from data,,0.0043,FALSE
-DFAW,Dimensional World Equity ETF,Global,ACWIIMI,ACWIIMI,ACWI,auto,derive from data,,0.0024,FALSE
+DFUS,Dimensional US Equity Market ETF,US Core,R3000,R3000,ITOT,2021-06-14,dimensional.com,DTMEX,0.0009,True
+DFAU,Dimensional US Core Equity Market ETF,US Core,R3000,R3000,ITOT,2020-11-17,press release,,0.0012,True
+DFAC,Dimensional US Core Equity 2 ETF,US Core,R3000,R3000,AVUS,2021-06-14,dimensional.com,DFTCX,0.0017,True
+DCOR,Dimensional US Core Equity 1 ETF,US Core,R3000,R3000,ITOT,auto,derive from data,,0.0014,True
+DUHP,Dimensional US High Profitability ETF,US Quality,R3000,R1000,QUAL,auto,derive from data,,0.002,True
+DFUV,Dimensional US Marketwide Value ETF,US Value,R3000,R3000V,VTV,2022-05-09,dimensional.com,DFMVX,0.0021,True
+DFLV,Dimensional US Large Cap Value ETF,US Value,R3000,R1000V,AVLV,auto,derive from data,,0.0021,True
+DFAS,Dimensional US Small Cap ETF,US Small,R3000,R2000,IJR,2021-06-14,dimensional.com,DFTSX,0.0026,True
+DFAT,Dimensional US Targeted Value ETF,US Small Value,R3000,R2000V,VBR,2021-06-14,dimensional.com,DTMVX,0.0028,True
+DFSV,Dimensional US Small Cap Value ETF,US Small Value,R3000,R2000V,AVUV,auto,derive from data,,0.003,True
+DFAI,Dimensional International Core Equity Market ETF,Dev ex-US,WXUSIMI,WXUSIMI,VEA,2020-11-17,press release,,0.0018,True
+DFIC,Dimensional International Core Equity 2 ETF,Dev ex-US,WXUSIMI,WXUSIMI,VEA,auto,derive from data,,0.0022,True
+DFIV,Dimensional International Value ETF,Dev ex-US Value,WXUS,WXUSV,IVLU,2021-09-13,dimensional.com,DTMIX,0.0027,True
+DFIS,Dimensional International Small Cap ETF,Dev ex-US Small,WXUS,WXUSSC,VSS,auto,derive from data,,0.0039,True
+DISV,Dimensional International Small Cap Value ETF,Dev ex-US Small Value,WXUS,WXUSSCV,AVDV,auto,derive from data,,0.0042,True
+DFAX,Dimensional World ex US Core Equity 2 ETF,World ex-US,ACWIXUSIMI,ACWIXUSIMI,IXUS,2021-09-13,dimensional.com,DFTWX,0.0028,True
+DFAE,Dimensional Emerging Core Equity Market ETF,EM,EMIMI,EMIMI,AVEM,2020-12-01,press release,,0.0029,True
+DFEM,Dimensional Emerging Markets Core Equity 2 ETF,EM,EMIMI,EMIMI,AVEM,auto,derive from data,,0.0039,True
+DFEV,Dimensional Emerging Markets Value ETF,EM Value,EMIMI,EMV,FNDE,auto,derive from data,,0.0043,False
+DFAW,Dimensional World Equity ETF,Global,ACWIIMI,ACWIIMI,ACWI,auto,derive from data,,0.0024,False

@@ -28,7 +28,6 @@ def _cover(pdf, settings: Settings, df: pd.DataFrame, demo: bool):
     fig = _new_page(demo, "")
     fig.text(0.06, 0.80, "Dimensional ETFs versus stated benchmarks", fontsize=24)
     fig.text(0.06, 0.735, "Since-inception implementation review", fontsize=14, color="0.35")
-    fig.text(0.06, 0.66, f"Prepared {pd.Timestamp.today():%d %B %Y}", fontsize=10, color="0.35")
 
     n_funds = df["ticker"].nunique() if not df.empty else 0
     span = ""
@@ -178,11 +177,13 @@ def _fund_page(pdf, tkr: str, res: dict, monthly: pd.DataFrame, daily: pd.DataFr
     charts.growth_chart(ax1, series, log=True)
 
     ax2 = fig.add_subplot(gs[0, 1])
-    rolls = {}
+    rolls, seen = {}, set()
     for kind, label in (("broad", "vs broad"), ("style", "vs style")):
         st = res.get((tkr, kind))
-        if st is not None and st.get("_rolling") is not None:
-            rolls[label] = st["_rolling"]
+        if st is None or st.get("_rolling") is None or st["bm_code"] in seen:
+            continue
+        seen.add(st["bm_code"])
+        rolls[f"{label} ({st['bm_code']})"] = st["_rolling"]
     charts.rolling_excess_chart(ax2, rolls, int(settings.a("rolling_window_months")))
 
     ax3 = fig.add_subplot(gs[1, 0])
@@ -194,11 +195,12 @@ def _fund_page(pdf, tkr: str, res: dict, monthly: pd.DataFrame, daily: pd.DataFr
     charts.drawdown_chart(ax3, px)
 
     ax4 = fig.add_subplot(gs[1, 1])
-    rel = {}
+    rel, seen_rel = {}, set()
     for kind, label in (("broad", "vs broad"), ("style", "vs style")):
         st = res.get((tkr, kind))
-        if st is None:
+        if st is None or st["bm_code"] in seen_rel:
             continue
+        seen_rel.add(st["bm_code"])
         code = st["bm_code"]
         if code in m.columns:
             pair = pd.concat({"f": m[tkr], "b": m[code]}, axis=1).dropna()
@@ -209,7 +211,7 @@ def _fund_page(pdf, tkr: str, res: dict, monthly: pd.DataFrame, daily: pd.DataFr
     n_rows = max(len(stat_tbl), 1)
     height = min(0.055 + 0.055 * n_rows, 0.22)
     ax5 = fig.add_axes([0.035, 0.245 - height, 0.93, height])
-    charts.table_axis(ax5, stat_tbl, fontsize=6.6)
+    charts.table_axis(ax5, stat_tbl, fontsize=6.0)
     fig.text(0.035, 0.055,
              "Excess and alpha are annualised. t-stat is the information ratio times the square "
              "root of years elapsed; treat anything under 2 as indistinguishable from zero. "
@@ -229,32 +231,36 @@ def _fund_stat_table(tkr: str, res: dict) -> pd.DataFrame:
     def f_num(v, d=2):
         return "n/a" if v is None or v != v else f"{v:.{d}f}"
 
+    broad, style = res.get((tkr, "broad")), res.get((tkr, "style"))
+    same = (broad is not None and style is not None
+            and broad["bm_code"] == style["bm_code"])
+    plan = ([("broad and style", broad)] if same
+            else [(k, st) for k, st in (("broad", broad), ("style", style))
+                  if st is not None])
+
     rows = []
-    for kind in ("broad", "style"):
-        st = res.get((tkr, kind))
-        if st is None:
-            continue
+    for kind, st in plan:
         rows.append({
             "Comparison": f"{kind} ({st['bm_code']})",
             "Proxy": f"{st.get('proxy_ticker', '')} [{st.get('proxy_quality', '')}]",
-            "Fund ann": f_pct(st["fund_ann"], 1),
-            "Bm ann": f_pct(st["bench_ann"], 1),
-            "Excess ann": f_pct(st["excess_ann_geom"], 2, sign=True),
+            "Fund": f_pct(st["fund_ann"], 1),
+            "Bm": f_pct(st["bench_ann"], 1),
+            "Excess": f_pct(st["excess_ann_geom"], 2, sign=True),
             "Pre-fee": f_pct(st.get("excess_before_fees"), 2, sign=True),
             "TE": f_pct(st["tracking_error"], 2),
             "IR": f_num(st["info_ratio"]),
-            "t-stat": f_num(st["t_stat"]),
-            "Hit rate": f_pct(st["hit_rate"], 0),
+            "t": f_num(st["t_stat"]),
+            "Hit": f_pct(st["hit_rate"], 0),
             "Beta": f_num(st["capm_beta"]),
-            "Alpha ann": f_pct(st["capm_alpha_ann"], 2, sign=True),
+            "Alpha": f_pct(st["capm_alpha_ann"], 2, sign=True),
             "Alpha t": f_num(st["capm_alpha_t"]),
-            "Up cap": f_num(st.get("up_capture")),
-            "Down cap": f_num(st.get("down_capture")),
-            "Fund maxDD": f_pct(st["fund_max_dd"], 1),
-            "Bm maxDD": f_pct(st["bench_max_dd"], 1),
-            "Roll 12m mean": f_pct(st.get("roll_mean"), 2, sign=True),
-            "Roll t (NW)": f_num(st.get("roll_t_nw")),
-            "Roll % pos": f_pct(st.get("roll_pct_positive"), 0),
+            "Up": f_num(st.get("up_capture")),
+            "Down": f_num(st.get("down_capture")),
+            "DD f": f_pct(st["fund_max_dd"], 1),
+            "DD bm": f_pct(st["bench_max_dd"], 1),
+            "Roll12m": f_pct(st.get("roll_mean"), 2, sign=True),
+            "Roll t": f_num(st.get("roll_t_nw")),
+            "Roll+": f_pct(st.get("roll_pct_positive"), 0),
         })
     return pd.DataFrame(rows)
 
@@ -308,8 +314,7 @@ def build(path, bundle: dict, settings: Settings) -> pd.DataFrame:
     demo = settings.source == "demo"
     df = raw_frame(results)
     footer_left = (f"Source: {settings.source}. "
-                   f"{'SIMULATED DATA' if demo else 'Total return, dividends reinvested'}. "
-                   f"Built {pd.Timestamp.today():%Y-%m-%d}.")
+                   f"{'SIMULATED DATA' if demo else 'Total return, dividends reinvested'}.")
 
     with PdfPages(path) as pdf:
         _cover(pdf, settings, df, demo)

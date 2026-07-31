@@ -25,7 +25,7 @@ analysis:
   benchmarks:               # which comparisons to run
     - broad
     - style
-  include_peer: false       # third comparison vs a passive peer ETF
+  include_peer: true       # third comparison vs a passive peer ETF
 
 output:
   dir: output

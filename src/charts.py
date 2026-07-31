@@ -11,9 +11,13 @@ from .config import SERIES_STYLE
 from .metrics import drawdown_series, growth_of
 
 
-def _pct(ax, axis="y", decimals=0):
-    fmt = mticker.PercentFormatter(xmax=1, decimals=decimals)
-    (ax.yaxis if axis == "y" else ax.xaxis).set_major_formatter(fmt)
+def _pct(ax, axis="y", decimals=None):
+    a = ax.yaxis if axis == "y" else ax.xaxis
+    if decimals is None:
+        lo, hi = ax.get_ylim() if axis == "y" else ax.get_xlim()
+        span = abs(hi - lo)
+        decimals = 0 if span > 0.10 else (1 if span > 0.02 else 2)
+    a.set_major_formatter(mticker.PercentFormatter(xmax=1, decimals=decimals))
 
 
 def growth_chart(ax, series: dict[str, pd.Series], log: bool = True,
@@ -48,7 +52,7 @@ def rolling_excess_chart(ax, rolls: dict[str, pd.Series], window: int = 12,
         ax.plot(roll.index, roll.values, label=key, **SERIES_STYLE.get(_kind(key), {}))
         plotted = True
     ax.axhline(0, color="0.2", linewidth=0.8)
-    _pct(ax, decimals=0)
+    _pct(ax)
     ax.set_title(title or f"Rolling {window}-month excess return")
     if plotted:
         ax.legend(loc="lower left")
@@ -65,7 +69,7 @@ def drawdown_chart(ax, prices: dict[str, pd.Series], title: str = "Drawdown from
         dd = drawdown_series(px)
         ax.plot(dd.index, dd.values, label=key, **SERIES_STYLE.get(_kind(key), {}))
     ax.axhline(0, color="0.2", linewidth=0.8)
-    _pct(ax, decimals=0)
+    _pct(ax)
     ax.set_title(title)
     ax.legend(loc="lower left")
     return ax
