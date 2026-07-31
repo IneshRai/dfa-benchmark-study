@@ -7,7 +7,7 @@ import pandas as pd
 
 from .config import Settings, load_benchmarks, load_universe
 from .data import daily_returns, monthly_returns, risk_free_monthly
-from .metrics import pair_stats
+from .metrics import geometric_excess, pair_stats
 
 
 def build_results(prices: pd.DataFrame, settings: Settings) -> dict:
@@ -155,7 +155,7 @@ def decomposition_table(df: pd.DataFrame) -> pd.DataFrame:
             "Broad bm": b["bm_code"],
             "Style bm": s["bm_code"],
             "vs broad": vs_broad,
-            "Style tilt effect": vs_broad - vs_style,
+            "Style tilt effect": geometric_excess(vs_broad, vs_style),
             "Implementation vs style": vs_style,
             "Impl t-stat": s["t_stat"],
             "Yrs": s["years"],
@@ -186,12 +186,13 @@ def write_workbook(path, df: pd.DataFrame, monthly: pd.DataFrame, results: dict,
             continue
         roll = st.get("_rolling")
         if roll is not None and not roll.empty:
-            excess_panel[tkr] = roll
+            excess_panel[f"{tkr} vs {st['bm_code']}"] = roll
 
     notes = pd.DataFrame({
         "item": [
             "Source", "Window", "Return basis", "Frequency of statistics",
-            "Excess return definition", "Significance", "Fees", "Generated",
+            "Excess return definition", "Decomposition", "Significance", "Fees",
+            "Generated",
         ],
         "detail": [
             settings.source,
@@ -200,6 +201,7 @@ def write_workbook(path, df: pd.DataFrame, monthly: pd.DataFrame, results: dict,
             else "as supplied in the external files",
             "monthly for statistics, daily for drawdowns",
             "geometric difference of annualised returns, fund minus benchmark",
+            "vs broad = (1 + style tilt) * (1 + implementation) - 1",
             "t-stat = IR * sqrt(years). Rolling window t-stats are Newey-West corrected.",
             "reported returns are already net of fund fees",
             pd.Timestamp.today().strftime("%Y-%m-%d"),

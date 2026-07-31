@@ -39,6 +39,17 @@ def annualised(returns: pd.Series, periods: int = MONTHS) -> float:
     return float(total ** (periods / n) - 1)
 
 
+def geometric_excess(fund_ann: float, bench_ann: float) -> float:
+    """(1+rf)/(1+rb)-1, the geometric difference of annualised returns.
+
+    The arithmetic difference overstates magnitude by roughly
+    excess * bench_ann, which is 10 to 100bp at these return levels.
+    """
+    if fund_ann != fund_ann or bench_ann != bench_ann or bench_ann <= -1:
+        return np.nan
+    return float((1.0 + fund_ann) / (1.0 + bench_ann) - 1.0)
+
+
 def ann_vol(returns: pd.Series, periods: int = MONTHS) -> float:
     return float(returns.std(ddof=1) * np.sqrt(periods))
 
@@ -233,7 +244,7 @@ def pair_stats(fund_m: pd.Series, bench_m: pd.Series, fund_d: pd.Series,
         "bench_cum": cumulative(b),
         "fund_ann": fund_ann,
         "bench_ann": bench_ann,
-        "excess_ann_geom": fund_ann - bench_ann,
+        "excess_ann_geom": geometric_excess(fund_ann, bench_ann),
         "excess_ann_mean": mean_excess_ann,
         "fund_vol": ann_vol(f),
         "bench_vol": ann_vol(b),
@@ -257,6 +268,8 @@ def pair_stats(fund_m: pd.Series, bench_m: pd.Series, fund_d: pd.Series,
     out.update(roll_stats)
     if expense_ratio is not None and out["excess_ann_geom"] == out["excess_ann_geom"]:
         out["expense_ratio"] = expense_ratio
-        out["excess_before_fees"] = out["excess_ann_geom"] + expense_ratio
+        out["excess_before_fees"] = geometric_excess(
+            fund_ann + expense_ratio, bench_ann
+        )
     out["_rolling"] = roll
     return out

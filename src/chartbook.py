@@ -57,7 +57,7 @@ def _methodology(pdf, settings: Settings, demo: bool, footer_left: str):
     fig.text(0.06, 0.92, "How to read this book", fontsize=16)
 
     body = [
-        ("Two benchmarks per fund", [
+        ("Three benchmarks per fund", [
             "Dimensional funds report against a broad regulatory benchmark (Russell 3000 for US funds,",
             "an MSCI aggregate for the rest) and, separately, against a style index that matches the",
             "fund's intended tilt. Both are shown because they answer different questions.",
@@ -66,6 +66,11 @@ def _methodology(pdf, settings: Settings, demo: bool, footer_left: str):
             "value fund beating the Russell 3000 tells you value worked, not that Dimensional executed",
             "well. Excess return versus the style index is the closer read on implementation: security",
             "selection inside the style, trading, securities lending, and fees.",
+            "",
+            "A third comparison is a passive or systematic competitor from a different index family",
+            "at a comparable fee. It is a robustness check, not a measure of execution. Where the",
+            "peer is itself a systematic fund rather than an index tracker, the comparison mixes",
+            "tilt design with implementation and should be read as which you would rather own.",
         ]),
         ("What counts as evidence", [
             "Most of these funds have three to five years of history. Over four years, an excess return",

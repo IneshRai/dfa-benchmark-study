@@ -135,6 +135,21 @@ def test_short_history_is_handled():
     assert st["_rolling"].empty               # not enough for a 12 month window
 
 
+def test_excess_is_geometric_not_arithmetic():
+    """Fund compounds to 13% a year, benchmark to 12%. Geometric excess is
+    1.13/1.12-1 = 0.893%, not 1.00%. The arithmetic version silently
+    overstates every excess return in the book.
+    """
+    idx = pd.date_range("2021-07-31", periods=60, freq="ME")
+    f = pd.Series(1.13 ** (1 / 12) - 1, index=idx)
+    b = pd.Series(1.12 ** (1 / 12) - 1, index=idx)
+    st = m.pair_stats(f, b, f, b)
+    approx(st["fund_ann"], 0.13, 1e-9)
+    approx(st["bench_ann"], 0.12, 1e-9)
+    approx(st["excess_ann_geom"], 1.13 / 1.12 - 1, 1e-9)
+    assert st["excess_ann_geom"] < 0.01 - 1e-6, "still using arithmetic subtraction"
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     failed = 0
