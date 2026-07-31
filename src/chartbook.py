@@ -104,12 +104,14 @@ def _methodology(pdf, settings: Settings, demo: bool, footer_left: str):
 
 def _summary_bars(pdf, df: pd.DataFrame, demo: bool, footer_left: str):
     fig = _new_page(demo, footer_left, "Summary")
-    gs = GridSpec(1, 2, figure=fig, left=0.11, right=0.96, top=0.86, bottom=0.12, wspace=0.42)
+    kinds = [k for k in ("broad", "style", "peer") if (df["bm_kind"] == k).any()]
+    gs = GridSpec(1, len(kinds), figure=fig, left=0.09, right=0.97, top=0.86,
+                  bottom=0.12, wspace=0.55)
     fig.text(0.06, 0.93, "Annualised excess return since inception", fontsize=16)
     fig.text(0.06, 0.895, "Hatched bars are not statistically distinguishable from zero "
                           "(absolute t-statistic below 2)", fontsize=8, color="0.4")
 
-    for i, kind in enumerate(("broad", "style")):
+    for i, kind in enumerate(kinds):
         sub = df[df["bm_kind"] == kind].sort_values("excess_ann_geom")
         ax = fig.add_subplot(gs[0, i])
         if sub.empty:
@@ -118,7 +120,9 @@ def _summary_bars(pdf, df: pd.DataFrame, demo: bool, footer_left: str):
         labels = [f"{r.ticker}  vs {r.bm_code}" for r in sub.itertuples()]
         charts.excess_bar_chart(
             ax, labels, sub["excess_ann_geom"].tolist(), sub["t_stat"].tolist(),
-            title=f"vs {'broad regulatory' if kind == 'broad' else 'style'} benchmark",
+            title={"broad": "vs broad regulatory benchmark",
+                   "style": "vs style benchmark",
+                   "peer": "vs passive peer fund"}[kind],
         )
     pdf.savefig(fig)
     charts.close(fig)
@@ -178,7 +182,7 @@ def _fund_page(pdf, tkr: str, res: dict, monthly: pd.DataFrame, daily: pd.DataFr
 
     ax2 = fig.add_subplot(gs[0, 1])
     rolls, seen = {}, set()
-    for kind, label in (("broad", "vs broad"), ("style", "vs style")):
+    for kind, label in (("broad", "vs broad"), ("style", "vs style"), ("peer", "vs peer")):
         st = res.get((tkr, kind))
         if st is None or st.get("_rolling") is None or st["bm_code"] in seen:
             continue
@@ -196,7 +200,7 @@ def _fund_page(pdf, tkr: str, res: dict, monthly: pd.DataFrame, daily: pd.DataFr
 
     ax4 = fig.add_subplot(gs[1, 1])
     rel, seen_rel = {}, set()
-    for kind, label in (("broad", "vs broad"), ("style", "vs style")):
+    for kind, label in (("broad", "vs broad"), ("style", "vs style"), ("peer", "vs peer")):
         st = res.get((tkr, kind))
         if st is None or st["bm_code"] in seen_rel:
             continue
@@ -237,6 +241,9 @@ def _fund_stat_table(tkr: str, res: dict) -> pd.DataFrame:
     plan = ([("broad and style", broad)] if same
             else [(k, st) for k, st in (("broad", broad), ("style", style))
                   if st is not None])
+    peer = res.get((tkr, "peer"))
+    if peer is not None:
+        plan = plan + [("peer", peer)]
 
     rows = []
     for kind, st in plan:
@@ -263,6 +270,55 @@ def _fund_stat_table(tkr: str, res: dict) -> pd.DataFrame:
             "Roll+": f_pct(st.get("roll_pct_positive"), 0),
         })
     return pd.DataFrame(rows)
+
+
+def _robustness(pdf, df: pd.DataFrame, demo: bool, footer_left: str):
+    """Does the sign of the excess return survive a change of benchmark?"""
+    piv = df.pivot_table(index="ticker", columns="bm_kind",
+                         values=["excess_ann_geom", "t_stat"])
+    rows = []
+    for tkr in piv.index:
+        try:
+            s, p = piv[("excess_ann_geom", "style")][tkr], piv[("excess_ann_geom", "peer")][tkr]
+            ts, tp = piv[("t_stat", "style")][tkr], piv[("t_stat", "peer")][tkr]
+        except KeyError:
+            continue
+        if s != s or p != p:
+            continue
+        sub = df[(df.ticker == tkr) & (df.bm_kind == "style")].iloc[0]
+        pr = df[(df.ticker == tkr) & (df.bm_kind == "peer")].iloc[0]
+        if s > 0 and p > 0:
+            verdict = "holds, both positive"
+        elif s < 0 and p < 0:
+            verdict = "holds, both negative"
+        else:
+            verdict = "SIGN FLIPS"
+        if verdict.startswith("holds") and min(abs(ts), abs(tp)) >= 2:
+            verdict += ", significant"
+        rows.append({
+            "Ticker": tkr, "Sleeve": sub["sleeve"],
+            "Style bm": sub["bm_code"], "Excess": f"{s * 100:+.2f}%", "t": f"{ts:.2f}",
+            "Peer": pr["bm_code"], "Excess ": f"{p * 100:+.2f}%", "t ": f"{tp:.2f}",
+            "Verdict": verdict,
+        })
+    tbl = pd.DataFrame(rows)
+    if tbl.empty:
+        return
+    order = {"SIGN FLIPS": 0}
+    tbl = tbl.sort_values("Verdict", key=lambda c: c.map(lambda v: order.get(v, 1)))
+
+    fig = _new_page(demo, footer_left, "Robustness")
+    fig.text(0.04, 0.93, "Does the result survive a change of benchmark?", fontsize=16)
+    fig.text(0.04, 0.895,
+             "Style benchmark against passive peer fund. A sign flip means the apparent result "
+             "depended on the choice of comparator, not on the fund", fontsize=8, color="0.4")
+    n_flip = int((tbl["Verdict"] == "SIGN FLIPS").sum())
+    fig.text(0.04, 0.865, f"{n_flip} of {len(tbl)} funds flip sign.", fontsize=9)
+    ax = fig.add_axes([0.03, 0.10, 0.94, 0.73])
+    charts.table_axis(ax, tbl.reset_index(drop=True), fontsize=6.8,
+                     col_width=[0.07, 0.15, 0.10, 0.09, 0.06, 0.09, 0.09, 0.06, 0.19])
+    pdf.savefig(fig)
+    charts.close(fig)
 
 
 def _exceptions(pdf, skipped: list[str], benchmarks: pd.DataFrame, demo: bool, footer_left: str):
@@ -335,6 +391,13 @@ def build(path, bundle: dict, settings: Settings) -> pd.DataFrame:
                          "Excess return summary, fund versus broad regulatory benchmark",
                          "Mostly a factor tilt result rather than an implementation result",
                          demo, footer_left, "Excess")
+            if (df["bm_kind"] == "peer").any():
+                _table_pages(pdf, excess_table(df, "peer"),
+                             "Excess return summary, fund versus passive peer fund",
+                             "A different index family at a comparable fee. Where the sign here "
+                             "disagrees with the style comparison, the style result was a proxy artifact",
+                             demo, footer_left, "Peer")
+                _robustness(pdf, df, demo, footer_left)
             dec = decomposition_table(df)
             _table_pages(pdf, dec,
                          "Where the excess return comes from",
