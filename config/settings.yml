@@ -1,0 +1,36 @@
+# DFA ETF vs benchmark study - run settings
+# Everything the analysis needs to be reproducible lives here or in the two CSVs.
+
+data:
+  # yahoo | csv | demo
+  #   yahoo -> yfinance download of adjusted closes (dividends reinvested, market price based)
+  #   csv   -> read wide CSVs from data/external (Bloomberg exports, NAV based, index total return)
+  #   demo  -> simulated series, plumbing test only, every page is watermarked
+  source: yahoo
+  start: 2020-11-01
+  end: null                 # null = today
+  cache: true
+  cache_dir: data/raw
+  external_dir: data/external
+  rf_ticker: ^IRX           # 13-week T-bill discount rate, used for Sharpe only
+
+analysis:
+  # since_listing  -> window starts at first date both fund and benchmark have data
+  # since_inception -> requires predecessor mutual fund NAV history in data/external
+  window: since_listing
+  frequency: M              # M for the statistics tables, daily always used for drawdowns
+  rolling_window_months: 12
+  min_months: 24            # funds with less history are reported but flagged
+  newey_west_lags: 11       # overlap correction for the 12m rolling excess series
+  benchmarks:               # which comparisons to run
+    - broad
+    - style
+  include_peer: false       # third comparison vs a passive peer ETF
+
+output:
+  dir: output
+  chartbook_name: dfa_chartbook.pdf
+  dataset_name: dfa_benchmark_dataset.xlsx
+  summary_name: summary_observations.md
+  font: Arial               # falls back to Liberation Sans then DejaVu Sans
+  greyscale: true

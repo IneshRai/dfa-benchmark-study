@@ -1,0 +1,23 @@
+# cached price pulls, regenerate with a run
+data/raw/*.csv
+data/raw/*.parquet
+
+# licensed vendor data. Bloomberg exports must not be committed.
+data/external/*
+!data/external/README.md
+!data/external/_template.csv
+
+# generated deliverables, uncomment if you want them tracked
+output/*.pdf
+output/*.xlsx
+output/*.md
+
+config/_universe_subset.csv
+
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.idea/
+.DS_Store

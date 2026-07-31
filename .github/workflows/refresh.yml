@@ -1,0 +1,61 @@
+name: refresh chartbook
+
+# Monthly rebuild on the Yahoo path so there is always a current book to look at
+# without anyone running it by hand. The Bloomberg path cannot run here: the
+# terminal is not reachable from a runner and the exports are licensed, so they are
+# gitignored. Anything client facing still gets built locally from Bloomberg.
+
+on:
+  schedule:
+    - cron: "0 11 3 * *"      # 11:00 UTC on the 3rd, after month-end data settles
+  workflow_dispatch:
+    inputs:
+      end:
+        description: "As-of date, YYYY-MM-DD, blank for today"
+        required: false
+        default: ""
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Test the statistics
+        run: python -m tests.test_metrics
+
+      - name: Build
+        run: |
+          if [ -n "${{ github.event.inputs.end }}" ]; then
+            python -m src.run --source yahoo --no-cache --end "${{ github.event.inputs.end }}"
+          else
+            python -m src.run --source yahoo --no-cache
+          fi
+
+      - name: Show what came out
+        run: |
+          ls -la output/
+          echo "--- summary ---"
+          head -20 output/summary_observations.md
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chartbook-${{ github.run_number }}
+          path: |
+            output/dfa_chartbook.pdf
+            output/dfa_benchmark_dataset.xlsx
+            output/summary_observations.md
+          retention-days: 90
+          if-no-files-found: error

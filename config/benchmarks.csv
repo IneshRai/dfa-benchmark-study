@@ -1,0 +1,16 @@
+bm_code,bm_name,proxy_ticker,proxy_index_tracked,proxy_quality,bbg_ticker,bbg_verified,notes
+R3000,Russell 3000 Index,IWV,Russell 3000,exact,RU30INTR Index,FALSE,Regulatory broad-based benchmark for DFA US equity funds
+R1000,Russell 1000 Index,IWB,Russell 1000,exact,RU10INTR Index,FALSE,
+R1000V,Russell 1000 Value Index,IWD,Russell 1000 Value,exact,RU10VATR Index,FALSE,
+R2000,Russell 2000 Index,IWM,Russell 2000,exact,RU20INTR Index,FALSE,
+R2000V,Russell 2000 Value Index,IWN,Russell 2000 Value,exact,RU20VATR Index,FALSE,
+R3000V,Russell 3000 Value Index,IWD,Russell 1000 Value,approximate,RU30VATR Index,FALSE,No US-listed R3000 Value ETF; IWD is large-cap only so proxy omits small-cap value
+WXUS,MSCI World ex USA Index,IDEV,MSCI World ex USA Custom,approximate,NDDUWXUS Index,FALSE,IDEV tracks a custom large/mid variant not the standard index
+WXUSIMI,MSCI World ex USA IMI Index,IDEV,MSCI World ex USA Custom,approximate,GDDLWIXUS Index,FALSE,Proxy omits small-cap tail of the IMI universe
+WXUSV,MSCI World ex USA Value Index,EFV,MSCI EAFE Value,approximate,NDDUWXUV Index,FALSE,EAFE excludes Canada and Israel differences vs World ex USA
+WXUSSC,MSCI World ex USA Small Cap Index,SCZ,MSCI EAFE Small Cap,approximate,NCUDWXUS Index,FALSE,EAFE Small Cap excludes Canada
+WXUSSCV,MSCI World ex USA Small Cap Value Index,DLS,WisdomTree Intl SmallCap Dividend,poor,MSCI custom,FALSE,No index-tracking proxy exists; use Bloomberg source or drop style comparison
+ACWIXUSIMI,MSCI ACWI ex USA IMI Index,VXUS,FTSE Global All Cap ex US,approximate,GDLEACWIXUS Index,FALSE,FTSE and MSCI differ on Korea classification and float treatment
+ACWIIMI,MSCI ACWI IMI Index,ACWI,MSCI ACWI,approximate,GDLEACWI Index,FALSE,ACWI is large/mid only
+EMIMI,MSCI Emerging Markets IMI Index,IEMG,MSCI Emerging Markets IMI,exact,GDLEEGFI Index,FALSE,IEMG tracks EM IMI directly
+EMV,MSCI Emerging Markets Value Index,FNDE,Russell RAFI EM,poor,NDUEEGFV Index,FALSE,No clean MSCI EM Value proxy
