@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import textwrap
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -48,6 +50,95 @@ def _cover(pdf, settings: Settings, df: pd.DataFrame, demo: bool):
                  "THIS COPY WAS BUILT ON SIMULATED DATA.\n"
                  "Every number is a plumbing test. Re-run with data.source: yahoo or csv.",
                  fontsize=12, color="0.25")
+    pdf.savefig(fig)
+    charts.close(fig)
+
+
+def _answer(pdf, df: pd.DataFrame, demo: bool, footer_left: str):
+    """One page stating the conclusion, computed from df so it cannot go stale."""
+    fig = _new_page(demo, footer_left, "Answer")
+    fig.text(0.06, 0.92, "The answer", fontsize=16)
+
+    style = df[df["bm_kind"] == "style"].set_index("ticker")
+    peer = df[df["bm_kind"] == "peer"].set_index("ticker")
+    n = len(style)
+    med_te = style["tracking_error"].median()
+    med_yrs = style["years"].median()
+    threshold = med_te * 2.0 / np.sqrt(med_yrs) if med_yrs > 0 else float("nan")
+
+    both = style.index.intersection(peer.index)
+    flips = [t for t in both
+             if np.sign(style.loc[t, "excess_ann_geom"]) != np.sign(peer.loc[t, "excess_ann_geom"])]
+    within = int((style["excess_ann_geom"].abs() < 0.01).sum())
+    verb = "reverses" if len(flips) == 1 else "reverse"
+
+    survivors = [t for t in both
+                 if style.loc[t, "excess_ann_geom"] > 0 and style.loc[t, "t_stat"] >= 2
+                 and peer.loc[t, "excess_ann_geom"] > 0 and peer.loc[t, "t_stat"] >= 2]
+    if survivors:
+        surv = "; ".join(
+            f"{t} at {style.loc[t, 'excess_ann_geom']*100:+.2f}% versus "
+            f"{style.loc[t, 'bm_code']} and {peer.loc[t, 'excess_ann_geom']*100:+.2f}% "
+            f"versus {peer.loc[t, 'bm_code']}" for t in survivors)
+        verdict = f"Positives surviving both comparators at an absolute t of 2 or better: {surv}."
+    else:
+        verdict = ("No fund shows a positive excess return that survives both comparators "
+                   "at an absolute t of 2 or better.")
+
+    top = style["excess_ann_geom"].idxmax()
+    top_line = (f"Largest apparent value-add is {top} in {style.loc[top, 'sleeve']}, "
+                f"{style.loc[top, 'excess_ann_geom']*100:+.2f}% a year against "
+                f"{style.loc[top, 'bm_code']} (t = {style.loc[top, 't_stat']:.2f}).")
+    if top in peer.index:
+        pe = peer.loc[top, "excess_ann_geom"]
+        if np.sign(pe) != np.sign(style.loc[top, "excess_ann_geom"]):
+            top_line += (f" That reverses to {pe*100:+.2f}% against {peer.loc[top, 'bm_code']}, "
+                         "so treat it as unmeasured rather than as a result.")
+    if str(style.loc[top, "proxy_quality"]).lower() == "poor":
+        top_line += (f" The {style.loc[top, 'bm_code']} proxy is flagged poor, "
+                     "which is the likely explanation.")
+
+    body = [
+        ("Have these funds beaten their benchmarks?", [
+            "Mostly no, and the question is harder to answer than it looks.",
+            "",
+            f"Across {n} funds, median tracking error against the style index is {med_te*100:.2f}% "
+            f"a year. At a median {med_yrs:.1f} years of history an excess return has to clear "
+            f"roughly {threshold*100:.2f}% a year before it separates from noise. {within} of {n} "
+            "funds sit within 1% of their style index, which is itself the finding: these are "
+            "index-like products and they track like them.",
+            "",
+            f"{len(flips)} of {n} results {verb} sign depending on whether the comparator is the fund's "
+            "style index or a passive competitor from a different index family. A result that flips "
+            "when the yardstick changes is a statement about the benchmark, not the fund, so those "
+            "should be read as unestablished rather than as small positives.",
+            "",
+            verdict,
+        ]),
+        ("Where has the value-add occurred?", [
+            top_line,
+            "",
+            "Read the style-relative column for implementation and the broad-benchmark column for "
+            "factor tilt. A small value fund beating the Russell 3000 tells you value worked in "
+            "this window, not that Dimensional executed well.",
+        ]),
+        ("What would change this answer", [
+            "Benchmarks here are proxy ETFs rather than index total return series, so every "
+            "comparison carries the proxy's own fee and tracking error. Rebuild on Bloomberg index "
+            "series before treating any single number as final.",
+        ]),
+    ]
+
+    y = 0.855
+    for heading, paras in body:
+        fig.text(0.06, y, heading, fontsize=11, weight="bold")
+        y -= 0.032
+        for para in paras:
+            lines = textwrap.wrap(para, width=112) if para else [""]
+            for line in lines:
+                fig.text(0.06, y, line, fontsize=9, color="0.15")
+                y -= 0.0235
+        y -= 0.018
     pdf.savefig(fig)
     charts.close(fig)
 
@@ -379,6 +470,8 @@ def build(path, bundle: dict, settings: Settings) -> pd.DataFrame:
 
     with PdfPages(path) as pdf:
         _cover(pdf, settings, df, demo)
+        if not df.empty:
+            _answer(pdf, df, demo, footer_left)
         _methodology(pdf, settings, demo, footer_left)
         if not df.empty:
             _summary_bars(pdf, df, demo, footer_left)
