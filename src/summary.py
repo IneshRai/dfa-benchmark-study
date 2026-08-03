@@ -152,8 +152,8 @@ def write(path, df: pd.DataFrame, settings: Settings, skipped: list[str]) -> Non
     hdr = "| Fund | Sleeve | Style benchmark | Yrs | Excess ann | Pre-fee | TE | IR | t-stat | Read |"
     sep = "|---|---|---|---|---|---|---|---|---|---|"
     if has_peer:
-        hdr = hdr[:-1] + " Peer check |"
-        sep = sep[:-1] + "---|"
+        hdr = hdr + " Peer check |"
+        sep = sep + "---|"
     w(hdr); w(sep)
     rob_i = rob.set_index("ticker") if has_peer else None
     for r in style.sort_values("excess_ann_geom", ascending=False).itertuples():
@@ -163,7 +163,7 @@ def write(path, df: pd.DataFrame, settings: Settings, skipped: list[str]) -> Non
                f"{r.verdict} |")
         if has_peer:
             v = rob_i["verdict"].get(r.ticker, "not tested")
-            row = row[:-1] + f" {v} |"
+            row = row + f" {v} |"
         w(row)
     w("")
 
